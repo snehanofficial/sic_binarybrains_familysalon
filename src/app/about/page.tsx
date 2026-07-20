@@ -34,10 +34,10 @@ export default function AboutPage() {
 
   const navLinks = [
     { label: "Home", action: () => navigateToHomeSPA("home") },
-    { label: "About", active: true, action: () => window.scrollTo({ top: 0, behavior: "smooth" }) },
     { label: "Services", action: () => navigateToHomeSPA("services") },
     { label: "Gallery", action: () => navigateToHomeSPA("gallery") },
     { label: "Book Appointment", action: () => navigateToHomeSPA("booking") },
+    { label: "About", active: true, action: () => window.scrollTo({ top: 0, behavior: "smooth" }) },
   ];
 
   return (
@@ -176,10 +176,10 @@ export default function AboutPage() {
               </h4>
               <div className="space-y-3">
                 <button onClick={() => navigateToHomeSPA("home")} className="block text-sm text-white/50 hover:text-white transition-colors" style={{ fontFamily: "Inter, sans-serif" }}>Home</button>
-                <button onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })} className="block text-sm text-white/50 hover:text-white transition-colors" style={{ fontFamily: "Inter, sans-serif" }}>About</button>
                 <button onClick={() => navigateToHomeSPA("services")} className="block text-sm text-white/50 hover:text-white transition-colors" style={{ fontFamily: "Inter, sans-serif" }}>Services</button>
                 <button onClick={() => navigateToHomeSPA("gallery")} className="block text-sm text-white/50 hover:text-white transition-colors" style={{ fontFamily: "Inter, sans-serif" }}>Gallery</button>
                 <button onClick={() => navigateToHomeSPA("booking")} className="block text-sm text-white/50 hover:text-white transition-colors" style={{ fontFamily: "Inter, sans-serif" }}>Book Appointment</button>
+                <button onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })} className="block text-sm text-white/50 hover:text-white transition-colors" style={{ fontFamily: "Inter, sans-serif" }}>About</button>
               </div>
             </div>
 
