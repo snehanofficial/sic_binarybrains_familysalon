@@ -1,10 +1,30 @@
+"use client";
+
 import { useState, useEffect, useRef } from "react";
 import {
   Star, Users, Shield, Award, Phone, MessageCircle, Menu, X,
   Check, Clock, MapPin, Mail, ArrowRight, Scissors,
   Sparkles, Heart, Baby, ChevronDown, ChevronRight,
-  Instagram, Facebook, User, Crown, CheckCircle2,
+  User, Crown, CheckCircle2,
 } from "lucide-react";
+
+// Inline social icons (lucide-react v1.x removed brand icons)
+function InstagramIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
+      <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+      <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" />
+    </svg>
+  );
+}
+function FacebookIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z" />
+    </svg>
+  );
+}
 
 type Page = "home" | "services" | "gallery" | "booking";
 type ServiceCategory = "hair" | "skin" | "grooming" | "bridal" | "kids" | "senior";
@@ -187,7 +207,7 @@ function StarRow({ count = 5 }: { count?: number }) {
 
 // ── MAIN APP ──────────────────────────────────────────────────────────────────
 
-export default function App() {
+export default function SalonApp() {
   const [page, setPage] = useState<Page>("home");
   const [activeCategory, setActiveCategory] = useState<ServiceCategory>("hair");
   const [galleryTab, setGalleryTab] = useState<GalleryTab>("interior");
@@ -196,11 +216,17 @@ export default function App() {
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [statsVisible, setStatsVisible] = useState(false);
   const statsRef = useRef<HTMLDivElement>(null);
+  // Hydration-safe mounted flag for date rendering
+  const [mounted, setMounted] = useState(false);
 
   // Booking state
   const [bookingStep, setBookingStep] = useState(1);
   const [bookingData, setBookingData] = useState({ customerType: "", service: "", stylist: "", date: "", time: "" });
   const bookingDone = bookingStep > 6;
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     const onScroll = () => setIsScrolled(window.scrollY > 80);
@@ -300,10 +326,10 @@ export default function App() {
           <div className="max-w-2xl">
             <div className="inline-flex items-center gap-2 bg-[#5F8D6D]/10 text-[#5F8D6D] px-4 py-2 rounded-full text-sm font-medium mb-7" style={{ fontFamily: "Inter, sans-serif" }}>
               <Star className="w-4 h-4 fill-current" />
-              4.9 ★ — Bangalore's Most Trusted Family Salon
+              4.9 ★ — Bangalore&apos;s Most Trusted Family Salon
             </div>
             <h1 className="text-5xl lg:text-6xl xl:text-7xl font-bold text-[#2B2B2B] leading-[1.1] mb-6" style={{ fontFamily: "Poppins, sans-serif" }}>
-              Your Family's<br />
+              Your Family&apos;s<br />
               <span className="text-[#5F8D6D]">Trusted Grooming</span><br />
               Destination
             </h1>
@@ -444,7 +470,7 @@ export default function App() {
             {testimonials.map((t, i) => (
               <div key={i} className="bg-white rounded-3xl p-6 shadow-sm hover:shadow-md transition-shadow">
                 <StarRow />
-                <p className="text-sm text-[#2B2B2B] leading-relaxed my-4 italic" style={{ fontFamily: "Inter, sans-serif" }}>"{t.text}"</p>
+                <p className="text-sm text-[#2B2B2B] leading-relaxed my-4 italic" style={{ fontFamily: "Inter, sans-serif" }}>&quot;{t.text}&quot;</p>
                 <div className="flex items-center gap-3">
                   <img src={`https://images.unsplash.com/${t.avatar}?w=60&h=60&fit=crop&auto=format`} alt={t.name} className="w-10 h-10 rounded-full object-cover bg-[#D8C4B6]" />
                   <div>
@@ -689,7 +715,7 @@ export default function App() {
 
       <div className="max-w-7xl mx-auto px-6 pb-16">
         <div className="bg-gradient-to-r from-[#5F8D6D] to-[#4a7057] rounded-3xl p-10 text-center text-white">
-          <Instagram className="w-10 h-10 mx-auto mb-4 opacity-75" />
+          <InstagramIcon className="w-10 h-10 mx-auto mb-4 opacity-75" />
           <h3 className="text-2xl font-bold mb-2" style={{ fontFamily: "Poppins, sans-serif" }}>Follow Us on Instagram</h3>
           <p className="text-white/70 mb-6 text-sm" style={{ fontFamily: "Inter, sans-serif" }}>@binarybrainssalon — Daily transformations, tips, and offers</p>
           <a href="https://instagram.com" className="inline-block bg-white text-[#5F8D6D] px-8 py-3 rounded-xl font-semibold hover:bg-white/90 transition-colors text-sm" style={{ fontFamily: "Inter, sans-serif" }}>
@@ -826,13 +852,13 @@ export default function App() {
                 </div>
               )}
 
-              {/* Step 4 — Date */}
+              {/* Step 4 — Date (mounted guard prevents hydration mismatch from new Date()) */}
               {bookingStep === 4 && (
                 <div>
                   <h2 className="text-2xl font-bold text-[#2B2B2B] mb-1.5" style={{ fontFamily: "Poppins, sans-serif" }}>Choose a Date</h2>
                   <p className="text-[#6B7280] text-sm mb-8" style={{ fontFamily: "Inter, sans-serif" }}>Select your preferred appointment date</p>
-                  <div className="grid grid-cols-4 sm:grid-cols-7 gap-2.5 mb-8">
-                    {Array.from({ length: 14 }, (_, i) => {
+                  <div className="grid grid-cols-4 sm:grid-cols-7 gap-2.5 mb-8" suppressHydrationWarning>
+                    {mounted && Array.from({ length: 14 }, (_, i) => {
                       const d = new Date();
                       d.setDate(d.getDate() + i + 1);
                       const dateStr = d.toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short" });
@@ -979,10 +1005,10 @@ export default function App() {
               <span className="font-bold text-xl" style={{ fontFamily: "Poppins, sans-serif" }}>Binary<span className="text-[#5F8D6D]">Brains</span></span>
             </div>
             <p className="text-white/50 text-sm leading-relaxed mb-6 max-w-sm" style={{ fontFamily: "Inter, sans-serif" }}>
-              Your family's trusted grooming destination. Professional, hygienic, and welcoming — since 2009.
+              Your family&apos;s trusted grooming destination. Professional, hygienic, and welcoming — since 2009.
             </p>
             <div className="flex gap-3">
-              {[Instagram, Facebook].map((Icon, i) => (
+              {[InstagramIcon, FacebookIcon].map((Icon, i) => (
                 <a key={i} href="#" className="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center hover:bg-[#5F8D6D] transition-colors">
                   <Icon className="w-4 h-4" />
                 </a>
