@@ -5,11 +5,19 @@ import {
   Star, Users, Shield, Award, Phone, MessageCircle, Menu, X,
   Check, Clock, MapPin, Mail, ArrowRight, Scissors,
   Sparkles, Heart, Baby, ChevronDown, ChevronRight,
-  User, Crown, CheckCircle2,
+  User, Crown, CheckCircle2, Bell, LogOut, UserCheck
 } from "lucide-react";
 import FloatingChatButton from "./components/chatbot/FloatingChatButton";
+import { AuthProvider, useAuth } from "../context/AuthContext";
+import { QueueProvider } from "../context/QueueContext";
+import { NotificationProvider, useNotifications } from "../context/NotificationContext";
 
-// Inline social icons (lucide-react v1.x removed brand icons)
+import AuthModal from "./components/auth/AuthModal";
+import LiveQueueView from "./components/queue/LiveQueueView";
+import StylistWorkspace from "./components/stylist/StylistWorkspace";
+import AdminDashboard from "./components/admin/AdminDashboard";
+import NotificationDrawer from "./components/notifications/NotificationDrawer";
+
 function InstagramIcon({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
@@ -27,7 +35,7 @@ function FacebookIcon({ className }: { className?: string }) {
   );
 }
 
-type Page = "home" | "services" | "gallery" | "booking";
+type Page = "home" | "services" | "gallery" | "booking" | "queue" | "stylist" | "admin";
 type ServiceCategory = "hair" | "skin" | "grooming" | "bridal" | "kids" | "senior";
 type GalleryTab = "interior" | "team" | "transformations";
 
@@ -208,7 +216,7 @@ function StarRow({ count = 5 }: { count?: number }) {
 
 // ── MAIN APP ──────────────────────────────────────────────────────────────────
 
-export default function SalonApp() {
+function SalonContent() {
   const [page, setPage] = useState<Page>("home");
   const [activeCategory, setActiveCategory] = useState<ServiceCategory>("hair");
   const [galleryTab, setGalleryTab] = useState<GalleryTab>("interior");
@@ -254,20 +262,26 @@ export default function SalonApp() {
   const navigate = (p: Page) => { setPage(p); setMobileOpen(false); };
   const goToBooking = () => { setPage("booking"); setBookingStep(1); };
 
-  // ── NAVBAR ──────────────────────────────────────────────────────────────────
+  // ── NAVBAR & AUTH INTEGRATION ─────────────────────────────────────────────
+  const { user, isAuthenticated, logout, openAuthModal, hasPermission } = useAuth();
+  const { unreadCount, toggleDrawer } = useNotifications();
+
   const navLinks = [
     { id: "home", label: "Home", action: () => navigate("home") },
     { id: "about", label: "About", action: () => { window.location.href = "/about"; } },
     { id: "services", label: "Services", action: () => navigate("services") },
+    { id: "queue", label: "Live Queue", action: () => navigate("queue") },
     { id: "gallery", label: "Gallery", action: () => navigate("gallery") },
     { id: "booking", label: "Book Appointment", action: () => navigate("booking") },
+    ...(hasPermission("booking:view_assigned") ? [{ id: "stylist", label: "Stylist Workspace", action: () => navigate("stylist") }] : []),
+    ...(hasPermission("reports:view") ? [{ id: "admin", label: "Admin Dashboard", action: () => navigate("admin") }] : []),
   ];
 
   const Navbar = () => (
-    <nav className={`fixed top-0 inset-x-0 z-50 transition-all duration-300 ${isScrolled || page !== "home" ? "bg-white/95 backdrop-blur-md shadow-sm" : "bg-transparent"}`}>
+    <nav className={`fixed top-0 inset-x-0 z-50 transition-all duration-300 ${isScrolled || page !== "home" ? "bg-white/95 backdrop-blur-md shadow-sm border-b border-black/5" : "bg-transparent"}`}>
       <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
         <button onClick={() => navigate("home")} className="flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-xl bg-[#5F8D6D] flex items-center justify-center">
+          <div className="w-9 h-9 rounded-xl bg-[#5F8D6D] flex items-center justify-center shadow-xs">
             <Scissors className="w-5 h-5 text-white" />
           </div>
           <span className="font-bold text-xl text-[#2B2B2B]" style={{ fontFamily: "Poppins, sans-serif" }}>
@@ -275,12 +289,12 @@ export default function SalonApp() {
           </span>
         </button>
 
-        <div className="hidden md:flex items-center gap-8">
+        <div className="hidden lg:flex items-center gap-7">
           {navLinks.map((l) => (
             <button
               key={l.id}
               onClick={l.action}
-              className={`text-sm font-medium transition-colors cursor-pointer ${page === l.id ? "text-[#5F8D6D]" : "text-[#2B2B2B] hover:text-[#5F8D6D]"}`}
+              className={`text-sm font-medium transition-colors cursor-pointer ${page === l.id ? "text-[#5F8D6D] font-semibold" : "text-[#2B2B2B] hover:text-[#5F8D6D]"}`}
               style={{ fontFamily: "Inter, sans-serif" }}
             >
               {l.label}
@@ -289,29 +303,67 @@ export default function SalonApp() {
         </div>
 
         <div className="hidden md:flex items-center gap-3">
-          <a href="tel:+919876543210" className="flex items-center gap-1.5 text-sm text-[#6B7280] hover:text-[#2B2B2B] transition-colors" style={{ fontFamily: "Inter, sans-serif" }}>
-            <Phone className="w-4 h-4" /> Call
-          </a>
-          <a href="https://wa.me/919876543210" className="flex items-center gap-1.5 text-sm text-[#25D366] hover:text-[#128C7E] transition-colors" style={{ fontFamily: "Inter, sans-serif" }}>
-            <MessageCircle className="w-4 h-4" /> WhatsApp
-          </a>
-          <button onClick={goToBooking} className="bg-[#C97C5D] text-white px-5 py-2.5 rounded-xl text-sm font-semibold hover:bg-[#b86b4c] transition-colors" style={{ fontFamily: "Inter, sans-serif" }}>
+          {/* In-App Notifications Bell */}
+          <button
+            onClick={toggleDrawer}
+            className="p-2.5 rounded-xl bg-white border border-black/5 text-[#2B2B2B] hover:bg-[#EEF5F1] transition-colors relative"
+            aria-label="View notifications"
+          >
+            <Bell className="w-4 h-4" />
+            {unreadCount > 0 && (
+              <span className="absolute -top-1 -right-1 w-4 h-4 bg-[#C97C5D] text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                {unreadCount}
+              </span>
+            )}
+          </button>
+
+          {/* User Auth Profile Button */}
+          {isAuthenticated ? (
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 px-3 py-1.5 bg-[#EEF5F1] rounded-xl border border-[#5F8D6D]/20 text-xs font-semibold text-[#5F8D6D]">
+                <UserCheck className="w-4 h-4 text-[#5F8D6D]" />
+                <span>{user?.name.split(" ")[0]} ({user?.role})</span>
+              </div>
+              <button
+                onClick={logout}
+                className="p-2 rounded-xl text-[#6B7280] hover:text-red-600 hover:bg-red-50 transition-colors"
+                title="Logout"
+              >
+                <LogOut className="w-4 h-4" />
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={() => openAuthModal("login")}
+              className="border border-[#5F8D6D] text-[#5F8D6D] px-4 py-2 rounded-xl text-sm font-semibold hover:bg-[#EEF5F1] transition-colors"
+              style={{ fontFamily: "Inter, sans-serif" }}
+            >
+              Login / Register
+            </button>
+          )}
+
+          <button onClick={goToBooking} className="bg-[#C97C5D] text-white px-5 py-2 rounded-xl text-sm font-semibold hover:bg-[#b86b4c] transition-colors shadow-sm" style={{ fontFamily: "Inter, sans-serif" }}>
             Book Now
           </button>
         </div>
 
-        <button onClick={() => setMobileOpen(!mobileOpen)} className="md:hidden p-2 rounded-xl hover:bg-[#EEF5F1] transition-colors">
+        <button onClick={() => setMobileOpen(!mobileOpen)} className="lg:hidden p-2 rounded-xl hover:bg-[#EEF5F1] transition-colors">
           {mobileOpen ? <X className="w-6 h-6 text-[#2B2B2B]" /> : <Menu className="w-6 h-6 text-[#2B2B2B]" />}
         </button>
       </div>
 
       {mobileOpen && (
-        <div className="md:hidden bg-white border-t border-[#F0EDE9] px-6 py-4 space-y-3">
+        <div className="lg:hidden bg-white border-t border-[#F0EDE9] px-6 py-4 space-y-3">
           {navLinks.map((l) => (
             <button key={l.id} onClick={() => { l.action(); setMobileOpen(false); }} className="block w-full text-left text-sm font-medium text-[#2B2B2B] py-2 hover:text-[#5F8D6D] transition-colors cursor-pointer" style={{ fontFamily: "Inter, sans-serif" }}>
               {l.label}
             </button>
           ))}
+          {!isAuthenticated && (
+            <button onClick={() => { openAuthModal("login"); setMobileOpen(false); }} className="w-full border border-[#5F8D6D] text-[#5F8D6D] py-2.5 rounded-xl text-sm font-semibold mt-2">
+              Login / Register
+            </button>
+          )}
           <button onClick={goToBooking} className="w-full bg-[#C97C5D] text-white py-3 rounded-xl text-sm font-semibold mt-2" style={{ fontFamily: "Inter, sans-serif" }}>
             Book Now
           </button>
@@ -598,7 +650,7 @@ export default function SalonApp() {
 
         <div className="max-w-7xl mx-auto px-6 py-12">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {serviceMap[activeCategory].map((svc, i) => (
+            {(serviceMap[activeCategory] || []).map((svc, i) => (
               <ServiceCard key={i} service={svc} onBook={goToBooking} />
             ))}
           </div>
@@ -1076,10 +1128,29 @@ export default function SalonApp() {
       {page === "services" && <ServicesPage />}
       {page === "gallery" && <GalleryPage />}
       {page === "booking" && <BookingPage />}
+      {page === "queue" && <LiveQueueView />}
+      {page === "stylist" && <StylistWorkspace />}
+      {page === "admin" && <AdminDashboard />}
       <Footer />
+
+      {/* Auth Modal & Notifications Drawer */}
+      <AuthModal />
+      <NotificationDrawer />
 
       {/* SalonSense AI Chatbot */}
       <FloatingChatButton />
     </div>
+  );
+}
+
+export default function SalonApp() {
+  return (
+    <AuthProvider>
+      <QueueProvider>
+        <NotificationProvider>
+          <SalonContent />
+        </NotificationProvider>
+      </QueueProvider>
+    </AuthProvider>
   );
 }
