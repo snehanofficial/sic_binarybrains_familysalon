@@ -122,6 +122,12 @@
   --color-sidebar-ring: var(--sidebar-ring);
   --font-poppins: var(--font-poppins-var, "Poppins", sans-serif);
   --font-inter: var(--font-inter-var, "Inter", sans-serif);
+  --color-sage: #A8BFA3;
+  --color-sage-light: #D8E6D2;
+  --color-cream: #F8F5EF;
+  --color-beige-warm: #ECE3D4;
+  --color-olive-dark: #45533F;
+  --color-gold-accent: #C9A96A;
 }
 
 @layer base {
