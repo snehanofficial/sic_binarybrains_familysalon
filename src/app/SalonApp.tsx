@@ -257,10 +257,10 @@ export default function SalonApp() {
   // ── NAVBAR ──────────────────────────────────────────────────────────────────
   const navLinks = [
     { id: "home", label: "Home", action: () => navigate("home") },
-    { id: "about", label: "About", action: () => { window.location.href = "/about"; } },
     { id: "services", label: "Services", action: () => navigate("services") },
     { id: "gallery", label: "Gallery", action: () => navigate("gallery") },
     { id: "booking", label: "Book Appointment", action: () => navigate("booking") },
+    { id: "about", label: "About", action: () => { window.location.href = "/about"; } },
   ];
 
   const Navbar = () => (
@@ -1030,10 +1030,10 @@ export default function SalonApp() {
             <h4 className="font-semibold text-sm mb-5 text-white/80" style={{ fontFamily: "Poppins, sans-serif" }}>Navigation</h4>
             <div className="space-y-3 text-left">
               <button onClick={() => navigate("home")} className="block text-sm text-white/50 hover:text-white transition-colors text-left cursor-pointer" style={{ fontFamily: "Inter, sans-serif" }}>Home</button>
-              <button onClick={() => window.location.href = "/about"} className="block text-sm text-white/50 hover:text-white transition-colors text-left cursor-pointer" style={{ fontFamily: "Inter, sans-serif" }}>About</button>
               <button onClick={() => navigate("services")} className="block text-sm text-white/50 hover:text-white transition-colors text-left cursor-pointer" style={{ fontFamily: "Inter, sans-serif" }}>Services</button>
               <button onClick={() => navigate("gallery")} className="block text-sm text-white/50 hover:text-white transition-colors text-left cursor-pointer" style={{ fontFamily: "Inter, sans-serif" }}>Gallery</button>
               <button onClick={() => navigate("booking")} className="block text-sm text-white/50 hover:text-white transition-colors text-left cursor-pointer" style={{ fontFamily: "Inter, sans-serif" }}>Book Appointment</button>
+              <button onClick={() => window.location.href = "/about"} className="block text-sm text-white/50 hover:text-white transition-colors text-left cursor-pointer" style={{ fontFamily: "Inter, sans-serif" }}>About</button>
             </div>
           </div>
 
