@@ -7,6 +7,7 @@ import {
   Sparkles, Heart, Baby, ChevronDown, ChevronRight,
   User, Crown, CheckCircle2,
 } from "lucide-react";
+import FloatingChatButton from "./components/chatbot/FloatingChatButton";
 
 // Inline social icons (lucide-react v1.x removed brand icons)
 function InstagramIcon({ className }: { className?: string }) {
@@ -226,6 +227,14 @@ export default function SalonApp() {
 
   useEffect(() => {
     setMounted(true);
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const pageParam = params.get("page") as Page;
+      if (pageParam && ["home", "services", "gallery", "booking"].includes(pageParam)) {
+        setPage(pageParam);
+        window.history.replaceState({}, "", window.location.pathname);
+      }
+    }
   }, []);
 
   useEffect(() => {
@@ -246,11 +255,12 @@ export default function SalonApp() {
   const goToBooking = () => { setPage("booking"); setBookingStep(1); };
 
   // ── NAVBAR ──────────────────────────────────────────────────────────────────
-  const navLinks: { id: Page; label: string }[] = [
-    { id: "home", label: "Home" },
-    { id: "services", label: "Services" },
-    { id: "gallery", label: "Gallery" },
-    { id: "booking", label: "Book Appointment" },
+  const navLinks = [
+    { id: "home", label: "Home", action: () => navigate("home") },
+    { id: "about", label: "About", action: () => { window.location.href = "/about"; } },
+    { id: "services", label: "Services", action: () => navigate("services") },
+    { id: "gallery", label: "Gallery", action: () => navigate("gallery") },
+    { id: "booking", label: "Book Appointment", action: () => navigate("booking") },
   ];
 
   const Navbar = () => (
@@ -269,8 +279,8 @@ export default function SalonApp() {
           {navLinks.map((l) => (
             <button
               key={l.id}
-              onClick={() => navigate(l.id)}
-              className={`text-sm font-medium transition-colors ${page === l.id ? "text-[#5F8D6D]" : "text-[#2B2B2B] hover:text-[#5F8D6D]"}`}
+              onClick={l.action}
+              className={`text-sm font-medium transition-colors cursor-pointer ${page === l.id ? "text-[#5F8D6D]" : "text-[#2B2B2B] hover:text-[#5F8D6D]"}`}
               style={{ fontFamily: "Inter, sans-serif" }}
             >
               {l.label}
@@ -298,7 +308,7 @@ export default function SalonApp() {
       {mobileOpen && (
         <div className="md:hidden bg-white border-t border-[#F0EDE9] px-6 py-4 space-y-3">
           {navLinks.map((l) => (
-            <button key={l.id} onClick={() => navigate(l.id)} className="block w-full text-left text-sm font-medium text-[#2B2B2B] py-2 hover:text-[#5F8D6D] transition-colors" style={{ fontFamily: "Inter, sans-serif" }}>
+            <button key={l.id} onClick={() => { l.action(); setMobileOpen(false); }} className="block w-full text-left text-sm font-medium text-[#2B2B2B] py-2 hover:text-[#5F8D6D] transition-colors cursor-pointer" style={{ fontFamily: "Inter, sans-serif" }}>
               {l.label}
             </button>
           ))}
@@ -1018,15 +1028,12 @@ export default function SalonApp() {
 
           <div className="md:col-span-3">
             <h4 className="font-semibold text-sm mb-5 text-white/80" style={{ fontFamily: "Poppins, sans-serif" }}>Navigation</h4>
-            <div className="space-y-3">
-              {(["Home", "Services", "Gallery", "Book Appointment"] as const).map((label) => {
-                const dest: Page = label === "Book Appointment" ? "booking" : (label.toLowerCase() as Page);
-                return (
-                  <button key={label} onClick={() => navigate(dest)} className="block text-sm text-white/50 hover:text-white transition-colors" style={{ fontFamily: "Inter, sans-serif" }}>
-                    {label}
-                  </button>
-                );
-              })}
+            <div className="space-y-3 text-left">
+              <button onClick={() => navigate("home")} className="block text-sm text-white/50 hover:text-white transition-colors text-left cursor-pointer" style={{ fontFamily: "Inter, sans-serif" }}>Home</button>
+              <button onClick={() => window.location.href = "/about"} className="block text-sm text-white/50 hover:text-white transition-colors text-left cursor-pointer" style={{ fontFamily: "Inter, sans-serif" }}>About</button>
+              <button onClick={() => navigate("services")} className="block text-sm text-white/50 hover:text-white transition-colors text-left cursor-pointer" style={{ fontFamily: "Inter, sans-serif" }}>Services</button>
+              <button onClick={() => navigate("gallery")} className="block text-sm text-white/50 hover:text-white transition-colors text-left cursor-pointer" style={{ fontFamily: "Inter, sans-serif" }}>Gallery</button>
+              <button onClick={() => navigate("booking")} className="block text-sm text-white/50 hover:text-white transition-colors text-left cursor-pointer" style={{ fontFamily: "Inter, sans-serif" }}>Book Appointment</button>
             </div>
           </div>
 
@@ -1071,14 +1078,8 @@ export default function SalonApp() {
       {page === "booking" && <BookingPage />}
       <Footer />
 
-      {/* Floating WhatsApp */}
-      <a
-        href="https://wa.me/919876543210"
-        aria-label="Chat on WhatsApp"
-        className="fixed bottom-6 right-6 z-50 w-14 h-14 bg-[#25D366] rounded-full flex items-center justify-center shadow-lg hover:shadow-xl hover:scale-110 transition-all duration-300"
-      >
-        <MessageCircle className="w-7 h-7 text-white" />
-      </a>
+      {/* SalonSense AI Chatbot */}
+      <FloatingChatButton />
     </div>
   );
 }
