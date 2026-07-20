@@ -19,21 +19,23 @@ const suggestions: SuggestionChip[] = [
 
 export default function SuggestedQuestions({ onSelectQuestion }: SuggestedQuestionsProps) {
   return (
-    <div className="flex flex-wrap gap-2 p-3 bg-white/70 border-t border-[#F0EDE9]">
-      <span className="text-[11px] text-[#6B7280] w-full mb-1 font-medium" style={{ fontFamily: "Inter, sans-serif" }}>
-        Suggested Prompts:
+    <div className="p-3 bg-white/70 border-t border-[#F0EDE9] flex flex-col gap-1.5 select-none">
+      <span className="text-[10px] text-[#6B7280] font-semibold uppercase tracking-wider pl-1" style={{ fontFamily: "Inter, sans-serif" }}>
+        Suggested Prompts
       </span>
-      {suggestions.map((chip, i) => (
-        <button
-          key={i}
-          onClick={() => onSelectQuestion(chip.query)}
-          className="flex items-center gap-1 text-xs bg-[#F7F5F2] hover:bg-[#EEF5F1] hover:text-[#5F8D6D] border border-black/[0.06] text-[#2B2B2B] px-3 py-1.5 rounded-full transition-all duration-200 text-left font-medium cursor-pointer"
-          style={{ fontFamily: "Inter, sans-serif" }}
-        >
-          <span>{chip.icon}</span>
-          <span>{chip.text}</span>
-        </button>
-      ))}
+      <div className="flex flex-row gap-2 overflow-x-auto py-1 scrollbar-none [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+        {suggestions.map((chip, i) => (
+          <button
+            key={i}
+            onClick={() => onSelectQuestion(chip.query)}
+            className="flex items-center gap-1.5 text-xs bg-[#F7F5F2] hover:bg-[#EEF5F1] hover:text-[#5F8D6D] border border-black/[0.05] text-[#2B2B2B] px-3.5 py-2 rounded-full transition-all duration-200 font-medium cursor-pointer flex-shrink-0 hover:-translate-y-[1px] hover:shadow-sm"
+            style={{ fontFamily: "Inter, sans-serif" }}
+          >
+            <span className="text-sm">{chip.icon}</span>
+            <span>{chip.text}</span>
+          </button>
+        ))}
+      </div>
     </div>
   );
 }
