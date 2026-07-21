@@ -84,9 +84,55 @@ router.get("/offers", async (_req: Request, res: Response) => {
 router.get("/reviews", async (_req: Request, res: Response) => {
   try {
     const reviews = await prisma.review.findMany({
+      where: { isFeatured: true },
       orderBy: { createdAt: "desc" },
+      take: 8,
     });
     return res.json({ success: true, data: reviews });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: { code: "SERVER_ERROR", message: err.message } });
+  }
+});
+
+// GET /api/notifications - Fetch authenticated user's notifications
+router.get("/notifications", authenticateJWT, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const userId = req.user?.userId;
+    const notifications = await prisma.notification.findMany({
+      where: { userId },
+      orderBy: { createdAt: "desc" },
+      take: 20,
+    });
+    return res.json({ success: true, data: notifications });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: { code: "SERVER_ERROR", message: err.message } });
+  }
+});
+
+// PATCH /api/notifications/:id/read - Mark notification as read
+router.patch("/notifications/:id/read", authenticateJWT, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user?.userId;
+    const updated = await prisma.notification.update({
+      where: { id, userId },
+      data: { read: true },
+    });
+    return res.json({ success: true, data: updated });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: { code: "SERVER_ERROR", message: err.message } });
+  }
+});
+
+// PATCH /api/notifications/read-all - Mark all notifications as read
+router.patch("/notifications/read-all", authenticateJWT, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const userId = req.user?.userId;
+    await prisma.notification.updateMany({
+      where: { userId, read: false },
+      data: { read: true },
+    });
+    return res.json({ success: true });
   } catch (err: any) {
     return res.status(500).json({ success: false, error: { code: "SERVER_ERROR", message: err.message } });
   }

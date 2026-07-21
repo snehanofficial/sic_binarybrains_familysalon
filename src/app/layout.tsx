@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Poppins, Inter } from "next/font/google";
+import { Toaster } from "sonner";
 import "./globals.css";
 
 const poppins = Poppins({
@@ -17,12 +18,18 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "BinaryBrains Family Salon",
+  title: "BinaryBrains Family Salon — Bangalore's Trusted Grooming Destination",
   description:
-    "Discover a family-friendly salon experience with transparent pricing, hygienic practices, and easy online booking tailored for all ages.",
+    "Book premium salon appointments for the whole family. Transparent pricing, hospital-grade hygiene, certified stylists, and a calm welcoming experience. Located in Koramangala, Bangalore.",
+  keywords: "family salon bangalore, hair salon koramangala, bridal makeup bangalore, kids haircut, beard styling",
+  openGraph: {
+    title: "BinaryBrains Family Salon",
+    description: "Bangalore's most trusted family salon. Book appointments online.",
+    type: "website",
+  },
   robots: {
-    index: false,
-    follow: false,
+    index: true,
+    follow: true,
   },
 };
 
@@ -36,7 +43,20 @@ export default function RootLayout({
       lang="en"
       className={`${poppins.variable} ${inter.variable}`}
     >
-      <body style={{ height: "100%", margin: 0 }}>{children}</body>
+      <body style={{ height: "100%", margin: 0 }}>
+        {children}
+        <Toaster
+          position="top-right"
+          richColors
+          toastOptions={{
+            style: {
+              fontFamily: "Inter, sans-serif",
+              borderRadius: "14px",
+              fontSize: "13px",
+            },
+          }}
+        />
+      </body>
     </html>
   );
 }

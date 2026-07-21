@@ -1,0 +1,40 @@
+# BinaryBrains Family Salon
+
+## Purpose
+Build a production-ready, trust-first Family Salon platform with a premium customer experience and complete backend integration.
+
+## Tech Stack
+- Next.js (App Router)
+- TypeScript
+- Express.js
+- PostgreSQL
+- Prisma ORM
+- Tailwind CSS
+- Radix UI
+- JWT Authentication
+
+## Core Principles
+- Trust before transactions
+- Real backend integration (no mock data)
+- Clean, modern, family-friendly UI
+- Mobile-first responsive design
+- Accessibility (WCAG 2.2 AA)
+- Secure, scalable architecture
+- Reusable, maintainable code
+
+## Rules
+- Use backend APIs as the single source of truth.
+- Do not use hardcoded or placeholder data.
+- Preserve the existing light theme.
+- Do not redesign the product identity.
+- Keep components modular and reusable.
+- Follow React, Next.js, and Express best practices.
+- Prioritize UX, performance, and security.
+
+## Done Criteria
+Every feature must:
+- Consume real APIs
+- Handle loading, empty, error, and success states
+- Respect authentication and RBAC
+- Be responsive and accessible
+- Be production-ready

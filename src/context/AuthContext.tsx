@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
 import { apiFetch, setAccessToken } from "../lib/api";
 
 export interface UserProfile {
@@ -16,6 +16,7 @@ interface AuthContextType {
   user: UserProfile | null;
   isAuthenticated: boolean;
   isLoading: boolean;
+  isInitialized: boolean;
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   register: (data: { email: string; password: string; name: string; phone: string }) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
@@ -31,10 +32,11 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isInitialized, setIsInitialized] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [authMode, setAuthMode] = useState<"login" | "register">("login");
 
-  // Silent refresh / fetch current user on mount
+  // Silent refresh / session restoration on mount
   useEffect(() => {
     async function initAuth() {
       try {
@@ -43,13 +45,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setAccessToken(res.data.accessToken);
           setUser(res.data.user);
         } else {
-          // Fallback to mock session if backend server is starting
           setUser(null);
         }
-      } catch (err) {
+      } catch {
         setUser(null);
       } finally {
         setIsLoading(false);
+        setIsInitialized(true);
       }
     }
     initAuth();
@@ -85,15 +87,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return { success: false, error: res.error?.message || "Registration failed." };
   };
 
-  const logout = async () => {
-    await apiFetch("/auth/logout", { method: "POST" });
-    setAccessToken(null);
-    setUser(null);
-  };
+  const logout = useCallback(async () => {
+    try {
+      await apiFetch("/auth/logout", { method: "POST" });
+    } catch {
+      // Always clear local state even if server call fails
+    } finally {
+      setAccessToken(null);
+      setUser(null);
+      setIsAuthModalOpen(false);
+    }
+  }, []);
 
   const hasPermission = (permission: string): boolean => {
     if (!user) return false;
-    if (user.role === "ADMIN" || user.permissions.includes("admin:all") || user.permissions.includes("settings:manage")) {
+    if (
+      user.role === "ADMIN" ||
+      user.permissions.includes("admin:all") ||
+      user.permissions.includes("settings:manage")
+    ) {
       return true;
     }
     return user.permissions.includes(permission);
@@ -112,6 +124,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         user,
         isAuthenticated: !!user,
         isLoading,
+        isInitialized,
         login,
         register,
         logout,

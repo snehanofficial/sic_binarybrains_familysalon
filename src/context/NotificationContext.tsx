@@ -1,56 +1,81 @@
 "use client";
 
-import React, { createContext, useContext, useState } from "react";
-
-export interface NotificationItem {
-  id: string;
-  title: string;
-  message: string;
-  type: "INFO" | "SUCCESS" | "WARNING" | "OFFER";
-  read: boolean;
-  createdAt: string;
-}
+import React, { createContext, useContext, useState, useEffect } from "react";
+import { apiFetch, setAccessToken } from "../lib/api";
+import { fetchNotifications, markNotificationRead, markAllNotificationsRead } from "../lib/apiServices";
+import type { NotificationItem } from "../lib/apiServices";
 
 interface NotificationContextType {
   notifications: NotificationItem[];
   unreadCount: number;
+  isLoading: boolean;
   markAsRead: (id: string) => void;
   markAllAsRead: () => void;
-  addNotification: (title: string, message: string, type?: NotificationItem["type"]) => void;
+  addNotification: (title: string, message: string, type?: string) => void;
+  refreshNotifications: () => Promise<void>;
   isDrawerOpen: boolean;
   toggleDrawer: () => void;
 }
 
-const initialNotifications: NotificationItem[] = [
-  { id: "n1", title: "Booking Confirmed", message: "Your appointment for Hair Cut & Beard Styling is confirmed for tomorrow at 10:00 AM.", type: "SUCCESS", read: false, createdAt: "10 mins ago" },
-  { id: "n2", title: "Queue Update", message: "Your estimated wait time is now 15 minutes. 1 customer ahead of you.", type: "INFO", read: false, createdAt: "25 mins ago" },
-  { id: "n3", title: "Special Offer", message: "Flat 15% off on all bridal and family packages this week with code FAMILY15.", type: "OFFER", read: true, createdAt: "2 hours ago" },
-];
-
 const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
 
-export function NotificationProvider({ children }: { children: React.ReactNode }) {
-  const [notifications, setNotifications] = useState<NotificationItem[]>(initialNotifications);
+export function NotificationProvider({
+  children,
+  isAuthenticated,
+}: {
+  children: React.ReactNode;
+  isAuthenticated: boolean;
+}) {
+  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
   const unreadCount = notifications.filter((n) => !n.read).length;
 
-  const markAsRead = (id: string) => {
-    setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
+  const refreshNotifications = async () => {
+    if (!isAuthenticated) {
+      setNotifications([]);
+      return;
+    }
+    try {
+      setIsLoading(true);
+      const res = await fetchNotifications();
+      if (res.success && res.data) {
+        setNotifications(res.data);
+      }
+    } catch {
+      // silently fail
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const markAllAsRead = () => {
+  useEffect(() => {
+    refreshNotifications();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated]);
+
+  const markAsRead = async (id: string) => {
+    // Optimistic update
+    setNotifications((prev) =>
+      prev.map((n) => (n.id === id ? { ...n, read: true } : n))
+    );
+    await markNotificationRead(id).catch(() => {});
+  };
+
+  const markAllAsRead = async () => {
     setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+    await markAllNotificationsRead().catch(() => {});
   };
 
-  const addNotification = (title: string, message: string, type: NotificationItem["type"] = "INFO") => {
+  const addNotification = (title: string, message: string, type: string = "INFO") => {
     const newItem: NotificationItem = {
-      id: `notif-${Date.now()}`,
+      id: `local-${Date.now()}`,
       title,
       message,
       type,
       read: false,
-      createdAt: "Just now",
+      createdAt: new Date().toISOString(),
     };
     setNotifications((prev) => [newItem, ...prev]);
   };
@@ -62,9 +87,11 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
       value={{
         notifications,
         unreadCount,
+        isLoading,
         markAsRead,
         markAllAsRead,
         addNotification,
+        refreshNotifications,
         isDrawerOpen,
         toggleDrawer,
       }}
@@ -79,3 +106,5 @@ export function useNotifications() {
   if (!context) throw new Error("useNotifications must be used within a NotificationProvider");
   return context;
 }
+
+export type { NotificationItem };
