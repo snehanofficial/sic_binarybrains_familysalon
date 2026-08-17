@@ -10,7 +10,10 @@ router.get("/services", async (req: Request, res: Response) => {
   try {
     const { category, gender, ageGroup, search, maxPrice } = req.query;
 
-    const where: any = { isEnabled: true };
+    const where: any = {};
+    if (req.query.all !== "true") {
+      where.isEnabled = true;
+    }
 
     if (category) {
       where.category = { slug: String(category) };
@@ -158,6 +161,50 @@ router.post("/services", authenticateJWT, requirePermission("service:manage"), a
     });
 
     return res.status(201).json({ success: true, data: service });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: { code: "SERVER_ERROR", message: err.message } });
+  }
+});
+
+// PUT /api/services/:id (Admin only)
+router.put("/services/:id", authenticateJWT, requirePermission("service:manage"), async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { name, categoryId, durationMinutes, price, targetGender, targetAgeGroup, imageUrl, benefits, description, isEnabled } = req.body;
+
+    const service = await prisma.service.update({
+      where: { id },
+      data: {
+        name,
+        categoryId,
+        durationMinutes: durationMinutes !== undefined ? parseInt(durationMinutes) : undefined,
+        price: price !== undefined ? parseFloat(price) : undefined,
+        targetGender,
+        targetAgeGroup,
+        imageUrl,
+        benefits,
+        description,
+        isEnabled: isEnabled !== undefined ? isEnabled : undefined,
+      },
+    });
+
+    return res.json({ success: true, data: service });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: { code: "SERVER_ERROR", message: err.message } });
+  }
+});
+
+// DELETE /api/services/:id (Admin only) - Soft delete / Deactivate
+router.delete("/services/:id", authenticateJWT, requirePermission("service:manage"), async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    const service = await prisma.service.update({
+      where: { id },
+      data: { isEnabled: false },
+    });
+
+    return res.json({ success: true, data: service });
   } catch (err: any) {
     return res.status(500).json({ success: false, error: { code: "SERVER_ERROR", message: err.message } });
   }

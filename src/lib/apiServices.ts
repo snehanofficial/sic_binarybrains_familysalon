@@ -164,6 +164,7 @@ export const fetchServices = (params?: {
   ageGroup?: string;
   search?: string;
   maxPrice?: number;
+  all?: boolean;
 }) => {
   const query = new URLSearchParams();
   if (params?.category) query.set("category", params.category);
@@ -171,6 +172,7 @@ export const fetchServices = (params?: {
   if (params?.ageGroup) query.set("ageGroup", params.ageGroup);
   if (params?.search) query.set("search", params.search);
   if (params?.maxPrice) query.set("maxPrice", String(params.maxPrice));
+  if (params?.all) query.set("all", "true");
   const qs = query.toString();
   return apiFetch<Service[]>(`/services${qs ? `?${qs}` : ""}`);
 };
@@ -255,3 +257,58 @@ export const markNotificationRead = (id: string) =>
 
 export const markAllNotificationsRead = () =>
   apiFetch("/notifications/read-all", { method: "PATCH" });
+
+// Services CRUD
+export const createService = (payload: any) =>
+  apiFetch<Service>("/services", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+
+export const updateService = (id: string, payload: any) =>
+  apiFetch<Service>(`/services/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(payload),
+  });
+
+export const deleteService = (id: string) =>
+  apiFetch<Service>(`/services/${id}`, {
+    method: "DELETE",
+  });
+
+// Stylists CRUD
+export const createStylist = (payload: any) =>
+  apiFetch<Stylist>("/admin/stylists", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+
+export const updateStylist = (id: string, payload: any) =>
+  apiFetch<Stylist>(`/admin/stylists/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(payload),
+  });
+
+export const deleteStylist = (id: string) =>
+  apiFetch<any>(`/admin/stylists/${id}`, {
+    method: "DELETE",
+  });
+
+// Offers CRUD
+export const createOffer = (payload: any) =>
+  apiFetch<Offer>("/admin/offers", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+
+export const updateOffer = (id: string, payload: any) =>
+  apiFetch<Offer>(`/admin/offers/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(payload),
+  });
+
+export const deleteOffer = (id: string) =>
+  apiFetch<Offer>(`/admin/offers/${id}`, {
+    method: "DELETE",
+  });
+
