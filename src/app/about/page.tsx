@@ -25,10 +25,10 @@ export default function AboutPage() {
   }, []);
 
   const navigateToHomeSPA = (pageParam?: string) => {
-    if (pageParam) {
-      window.location.href = `/?page=${pageParam}`;
-    } else {
+    if (pageParam === "home" || !pageParam) {
       window.location.href = "/";
+    } else {
+      window.location.href = `/${pageParam}`;
     }
   };
 

@@ -60,6 +60,14 @@ export default function AuthModal() {
           setErrorMsg(res.error || "Invalid email or password. Please try again.");
         } else {
           showToast.success("Welcome back!", "You are now signed in.");
+          const role = res.user?.role;
+          if (role === "ADMIN") {
+            window.location.href = "/admin";
+          } else if (role === "STYLIST") {
+            window.location.href = "/stylist";
+          } else {
+            window.location.reload();
+          }
         }
       } else if (mode === "register") {
         const res = await register({ email, password, name, phone });
@@ -67,6 +75,7 @@ export default function AuthModal() {
           setErrorMsg(res.error || "Registration failed. Please try again.");
         } else {
           showToast.success("Account created!", "Welcome to BinaryBrains.");
+          window.location.reload();
         }
       } else if (mode === "forgot") {
         // Simulated — no backend endpoint for password reset yet

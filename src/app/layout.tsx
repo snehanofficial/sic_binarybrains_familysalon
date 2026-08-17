@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Poppins, Inter } from "next/font/google";
 import { Toaster } from "sonner";
+import Providers from "./providers";
 import "./globals.css";
 
 const poppins = Poppins({
@@ -44,7 +45,9 @@ export default function RootLayout({
       className={`${poppins.variable} ${inter.variable}`}
     >
       <body style={{ height: "100%", margin: 0 }}>
-        {children}
+        <Providers>
+          {children}
+        </Providers>
         <Toaster
           position="top-right"
           richColors

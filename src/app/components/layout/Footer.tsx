@@ -1,12 +1,9 @@
 "use client";
 
 import { Scissors, MapPin, Phone, Mail, Clock } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 type Page = "home" | "services" | "gallery" | "booking" | "queue" | "stylist" | "admin";
-
-interface FooterProps {
-  navigate: (p: Page) => void;
-}
 
 function InstagramIcon({ className }: { className?: string }) {
   return (
@@ -26,7 +23,12 @@ function FacebookIcon({ className }: { className?: string }) {
   );
 }
 
-export default function Footer({ navigate }: FooterProps) {
+export default function Footer() {
+  const router = useRouter();
+  const navigate = (p: Page) => {
+    if (p === "home") router.push("/");
+    else router.push(`/${p}`);
+  };
   return (
     <footer className="bg-[#2B2B2B] text-white py-14" role="contentinfo">
       <div className="max-w-7xl mx-auto px-6">

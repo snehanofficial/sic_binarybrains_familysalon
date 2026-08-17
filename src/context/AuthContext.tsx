@@ -17,8 +17,8 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
   isInitialized: boolean;
-  login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
-  register: (data: { email: string; password: string; name: string; phone: string }) => Promise<{ success: boolean; error?: string }>;
+  login: (email: string, password: string) => Promise<{ success: boolean; user?: UserProfile; error?: string }>;
+  register: (data: { email: string; password: string; name: string; phone: string }) => Promise<{ success: boolean; user?: UserProfile; error?: string }>;
   logout: () => Promise<void>;
   hasPermission: (permission: string) => boolean;
   isAuthModalOpen: boolean;
@@ -67,7 +67,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setAccessToken(res.data.accessToken);
       setUser(res.data.user);
       setIsAuthModalOpen(false);
-      return { success: true };
+      return { success: true, user: res.data.user };
     }
     return { success: false, error: res.error?.message || "Invalid credentials." };
   };
@@ -82,7 +82,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setAccessToken(res.data.accessToken);
       setUser(res.data.user);
       setIsAuthModalOpen(false);
-      return { success: true };
+      return { success: true, user: res.data.user };
     }
     return { success: false, error: res.error?.message || "Registration failed." };
   };
