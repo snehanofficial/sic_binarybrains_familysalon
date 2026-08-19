@@ -164,6 +164,7 @@ export const fetchServices = (params?: {
   ageGroup?: string;
   search?: string;
   maxPrice?: number;
+  all?: boolean;
 }) => {
   const query = new URLSearchParams();
   if (params?.category) query.set("category", params.category);
@@ -171,6 +172,7 @@ export const fetchServices = (params?: {
   if (params?.ageGroup) query.set("ageGroup", params.ageGroup);
   if (params?.search) query.set("search", params.search);
   if (params?.maxPrice) query.set("maxPrice", String(params.maxPrice));
+  if (params?.all) query.set("all", "true");
   const qs = query.toString();
   return apiFetch<Service[]>(`/services${qs ? `?${qs}` : ""}`);
 };

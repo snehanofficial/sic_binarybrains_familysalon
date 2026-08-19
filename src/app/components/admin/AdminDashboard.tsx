@@ -5,6 +5,7 @@ import {
   TrendingUp, Users, Calendar, Scissors, Tag, Sliders, ShieldAlert,
   Search, RefreshCw, Loader2, AlertCircle, Plus, Edit, Trash2, Check, X, Star,
 } from "lucide-react";
+import { useAuth } from "../../../context/AuthContext";
 import {
   fetchAdminMetrics, fetchCustomers, updateCustomerStatus,
   fetchAdminSettings, fetchAuditLogs,
@@ -25,6 +26,7 @@ function formatCurrency(value: number) {
 }
 
 export default function AdminDashboard() {
+  const { user, hasPermission } = useAuth();
   const [activeTab, setActiveTab] = useState<Tab>("overview");
 
   // Overview state
@@ -46,6 +48,58 @@ export default function AdminDashboard() {
   // Audit logs state
   const [auditLogs, setAuditLogs] = useState<any[]>([]);
   const [auditLoading, setAuditLoading] = useState(false);
+
+  // Services state
+  const [services, setServices] = useState<Service[]>([]);
+  const [servicesLoading, setServicesLoading] = useState(false);
+  const [servicesError, setServicesError] = useState(false);
+  const [categories, setCategories] = useState<Category[]>([]);
+  
+  // Stylists state
+  const [stylists, setStylists] = useState<Stylist[]>([]);
+  const [stylistsLoading, setStylistsLoading] = useState(false);
+  const [stylistsError, setStylistsError] = useState(false);
+
+  // Offers state
+  const [offers, setOffers] = useState<Offer[]>([]);
+  const [offersLoading, setOffersLoading] = useState(false);
+  const [offersError, setOffersError] = useState(false);
+
+  // Service form states
+  const [serviceFormOpen, setServiceFormOpen] = useState(false);
+  const [serviceEditId, setServiceEditId] = useState<string | null>(null);
+  const [serviceName, setServiceName] = useState("");
+  const [serviceCategoryId, setServiceCategoryId] = useState("");
+  const [servicePrice, setServicePrice] = useState("");
+  const [serviceDuration, setServiceDuration] = useState("");
+  const [serviceGender, setServiceGender] = useState("Unisex");
+  const [serviceAgeGroup, setServiceAgeGroup] = useState("All");
+  const [serviceImageUrl, setServiceImageUrl] = useState("");
+  const [serviceDescription, setServiceDescription] = useState("");
+  const [serviceBenefits, setServiceBenefits] = useState("");
+  const [serviceEnabled, setServiceEnabled] = useState(true);
+
+  // Stylist form states
+  const [stylistFormOpen, setStylistFormOpen] = useState(false);
+  const [stylistEditId, setStylistEditId] = useState<string | null>(null);
+  const [stylistName, setStylistName] = useState("");
+  const [stylistPhotoUrl, setStylistPhotoUrl] = useState("");
+  const [stylistExperience, setStylistExperience] = useState("");
+  const [stylistSpecialization, setStylistSpecialization] = useState("");
+  const [stylistWorkingHours, setStylistWorkingHours] = useState("9:00 AM - 8:00 PM");
+  const [stylistAvailable, setStylistAvailable] = useState(true);
+
+  // Offer form states
+  const [offerFormOpen, setOfferFormOpen] = useState(false);
+  const [offerEditId, setOfferEditId] = useState<string | null>(null);
+  const [offerTitle, setOfferTitle] = useState("");
+  const [offerCode, setOfferCode] = useState("");
+  const [offerDescription, setOfferDescription] = useState("");
+  const [offerDiscountType, setOfferDiscountType] = useState<"PERCENTAGE" | "FIXED_AMOUNT">("PERCENTAGE");
+  const [offerDiscountValue, setOfferDiscountValue] = useState("");
+  const [offerBadge, setOfferBadge] = useState("");
+  const [offerCategory, setOfferCategory] = useState("");
+  const [offerEnabled, setOfferEnabled] = useState(true);
 
   const loadMetrics = useCallback(async () => {
     setMetricsLoading(true);
@@ -163,6 +217,7 @@ export default function AdminDashboard() {
 
   // Initial load based on active tab
   useEffect(() => {
+    if (!user || !hasPermission("reports:view")) return;
     if (activeTab === "overview") loadMetrics();
     if (activeTab === "customers") loadCustomers();
     if (activeTab === "settings") loadSettings();
@@ -409,6 +464,23 @@ export default function AdminDashboard() {
     { id: "audit", label: "Audit Logs", icon: ShieldAlert },
   ];
 
+  // Auth / Role protection render block
+  if (!user || !hasPermission("reports:view")) {
+    return (
+      <div className="pt-24 min-h-screen bg-[#F7F5F2] flex items-center justify-center">
+        <div className="bg-white rounded-3xl p-12 text-center shadow-xl border border-black/5 max-w-md mx-6">
+          <ShieldAlert className="w-12 h-12 text-red-500 mx-auto mb-3" aria-hidden="true" />
+          <h3 className="text-xl font-bold text-[#2B2B2B] mb-2" style={{ fontFamily: "Poppins, sans-serif" }}>
+            Access Denied
+          </h3>
+          <p className="text-sm text-[#6B7280]">
+            You do not have the required permissions to access the Admin Control Centre. Please log in with admin credentials.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="pt-24 min-h-screen bg-[#F7F5F2] pb-16 page-transition" style={{ fontFamily: "Inter, sans-serif" }}>
       <div className="max-w-7xl mx-auto px-6">
@@ -584,7 +656,7 @@ export default function AdminDashboard() {
                         <td className="py-4 text-[#6B7280]">{c.phone}</td>
                         <td className="py-4 font-bold text-[#5F8D6D]">{c._count.bookings} visits</td>
                         <td className="py-4">
-                          <span
+                           <span
                             className={`px-2.5 py-1 rounded-full text-[10px] font-bold ${
                               c.status === "ACTIVE" ? "bg-[#EEF5F1] text-[#5F8D6D]" : "bg-red-50 text-red-600"
                             }`}
@@ -606,6 +678,331 @@ export default function AdminDashboard() {
                             {updatingId === c.id && <Loader2 className="w-3 h-3 animate-spin" aria-hidden="true" />}
                             {c.status === "ACTIVE" ? "Disable" : "Restore"}
                           </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Services Tab */}
+        {activeTab === "services" && (
+          <div className="bg-white rounded-3xl p-8 shadow-sm border border-black/5">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+              <div>
+                <h3 className="text-xl font-bold text-[#2B2B2B]" style={{ fontFamily: "Poppins, sans-serif" }}>Service Catalog</h3>
+                <p className="text-xs text-[#6B7280] mt-0.5">{services.length} total services</p>
+              </div>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => { resetServiceForm(); setServiceFormOpen(true); }}
+                  className="bg-[#5F8D6D] text-white px-4 py-2 rounded-xl text-xs font-semibold hover:bg-[#4E7659] transition-colors flex items-center gap-1.5"
+                >
+                  <Plus className="w-4 h-4" /> Add Service
+                </button>
+                <button onClick={loadServices} className="p-2 rounded-xl hover:bg-[#EEF5F1] transition-colors text-[#6B7280] hover:text-[#5F8D6D]" aria-label="Refresh services list">
+                  <RefreshCw className="w-4 h-4" aria-hidden="true" />
+                </button>
+              </div>
+            </div>
+
+            {servicesLoading ? (
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <tbody>{Array.from({ length: 5 }).map((_, i) => <TableRowSkeleton key={i} cols={7} />)}</tbody>
+                </table>
+              </div>
+            ) : servicesError ? (
+              <ErrorState onRetry={loadServices} />
+            ) : services.length === 0 ? (
+              <p className="text-center text-sm text-[#6B7280] py-10">No services found in database.</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs" aria-label="Service list">
+                  <thead>
+                    <tr className="border-b border-black/5 text-[#6B7280]">
+                      <th className="pb-3 font-semibold">Service Name</th>
+                      <th className="pb-3 font-semibold">Category</th>
+                      <th className="pb-3 font-semibold">Price</th>
+                      <th className="pb-3 font-semibold">Duration</th>
+                      <th className="pb-3 font-semibold">Gender/Age</th>
+                      <th className="pb-3 font-semibold">Status</th>
+                      <th className="pb-3 font-semibold text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-black/5">
+                    {services.map((svc) => (
+                      <tr key={svc.id} className="hover:bg-[#F7F5F2] transition-colors">
+                        <td className="py-4">
+                          <div className="flex items-center gap-3">
+                            <img
+                              src={svc.imageUrl}
+                              alt={svc.name}
+                              className="w-10 h-10 rounded-xl object-cover border border-black/5"
+                            />
+                            <div>
+                              <div className="font-semibold text-[#2B2B2B]">{svc.name}</div>
+                              <div className="text-[10px] text-[#6B7280] max-w-[200px] truncate">{svc.description}</div>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="py-4 text-[#6B7280] font-medium">{svc.category?.name || "Uncategorized"}</td>
+                        <td className="py-4 font-bold text-[#C97C5D]">{formatCurrency(svc.price)}</td>
+                        <td className="py-4 text-[#6B7280]">{svc.durationMinutes} mins</td>
+                        <td className="py-4 text-[#6B7280]">{svc.targetGender} / {svc.targetAgeGroup}</td>
+                        <td className="py-4">
+                          <span
+                            className={`px-2 py-0.5 rounded-full text-[9px] font-bold ${
+                              svc.isEnabled ? "bg-[#EEF5F1] text-[#5F8D6D]" : "bg-red-50 text-red-600"
+                            }`}
+                          >
+                            {svc.isEnabled ? "ACTIVE" : "INACTIVE"}
+                          </span>
+                        </td>
+                        <td className="py-4 text-right">
+                          <div className="flex items-center gap-1.5 justify-end">
+                            <button
+                              onClick={() => handleServiceToggleActive(svc)}
+                              className={`p-1.5 rounded-lg border transition-colors ${
+                                svc.isEnabled
+                                  ? "border-red-200 text-red-600 hover:bg-red-50"
+                                  : "border-[#5F8D6D]/30 text-[#5F8D6D] hover:bg-[#EEF5F1]"
+                              }`}
+                              title={svc.isEnabled ? "Deactivate" : "Activate"}
+                            >
+                              {svc.isEnabled ? <X className="w-3.5 h-3.5" /> : <Check className="w-3.5 h-3.5" />}
+                            </button>
+                            <button
+                              onClick={() => handleServiceEdit(svc)}
+                              className="p-1.5 rounded-lg border border-black/10 text-[#6B7280] hover:bg-[#F7F5F2] transition-colors"
+                              title="Edit Properties"
+                            >
+                              <Edit className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              onClick={() => handleServiceDelete(svc.id, svc.name)}
+                              className="p-1.5 rounded-lg border border-red-200 text-red-600 hover:bg-red-50 transition-colors"
+                              title="Deactivate / Soft-Delete"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Stylists Tab */}
+        {activeTab === "stylists" && (
+          <div className="bg-white rounded-3xl p-8 shadow-sm border border-black/5">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+              <div>
+                <h3 className="text-xl font-bold text-[#2B2B2B]" style={{ fontFamily: "Poppins, sans-serif" }}>Stylist Roster</h3>
+                <p className="text-xs text-[#6B7280] mt-0.5">{stylists.length} registered stylists</p>
+              </div>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => { resetStylistForm(); setStylistFormOpen(true); }}
+                  className="bg-[#5F8D6D] text-white px-4 py-2 rounded-xl text-xs font-semibold hover:bg-[#4E7659] transition-colors flex items-center gap-1.5"
+                >
+                  <Plus className="w-4 h-4" /> Add Stylist
+                </button>
+                <button onClick={loadStylists} className="p-2 rounded-xl hover:bg-[#EEF5F1] transition-colors text-[#6B7280] hover:text-[#5F8D6D]" aria-label="Refresh stylist list">
+                  <RefreshCw className="w-4 h-4" aria-hidden="true" />
+                </button>
+              </div>
+            </div>
+
+            {stylistsLoading ? (
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <tbody>{Array.from({ length: 4 }).map((_, i) => <TableRowSkeleton key={i} cols={6} />)}</tbody>
+                </table>
+              </div>
+            ) : stylistsError ? (
+              <ErrorState onRetry={loadStylists} />
+            ) : stylists.length === 0 ? (
+              <p className="text-center text-sm text-[#6B7280] py-10">No stylists registered in database.</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs" aria-label="Stylist roster">
+                  <thead>
+                    <tr className="border-b border-black/5 text-[#6B7280]">
+                      <th className="pb-3 font-semibold">Stylist</th>
+                      <th className="pb-3 font-semibold">Specialization</th>
+                      <th className="pb-3 font-semibold">Experience</th>
+                      <th className="pb-3 font-semibold">Rating</th>
+                      <th className="pb-3 font-semibold">Availability</th>
+                      <th className="pb-3 font-semibold text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-black/5">
+                    {stylists.map((sty) => (
+                      <tr key={sty.id} className="hover:bg-[#F7F5F2] transition-colors">
+                        <td className="py-4">
+                          <div className="flex items-center gap-3">
+                            <img
+                              src={sty.photoUrl}
+                              alt={sty.name}
+                              className="w-10 h-10 rounded-full object-cover border border-black/5"
+                            />
+                            <div className="font-semibold text-[#2B2B2B]">{sty.name}</div>
+                          </div>
+                        </td>
+                        <td className="py-4 text-[#6B7280]">{sty.specialization}</td>
+                        <td className="py-4 text-[#6B7280]">{sty.experience}</td>
+                        <td className="py-4 text-[#5F8D6D] font-bold">★ {sty.rating.toFixed(1)}</td>
+                        <td className="py-4">
+                          <span
+                            className={`px-2.5 py-1 rounded-full text-[10px] font-bold cursor-pointer transition-colors ${
+                              sty.isAvailable ? "bg-[#EEF5F1] text-[#5F8D6D] hover:bg-[#d9ede3]" : "bg-red-50 text-red-600 hover:bg-red-100"
+                            }`}
+                            onClick={() => handleStylistToggleAvailability(sty)}
+                            title="Click to toggle availability status"
+                          >
+                            {sty.isAvailable ? "AVAILABLE" : "UNAVAILABLE"}
+                          </span>
+                        </td>
+                        <td className="py-4 text-right">
+                          <div className="flex items-center gap-1.5 justify-end">
+                            <button
+                              onClick={() => handleStylistEdit(sty)}
+                              className="p-1.5 rounded-lg border border-black/10 text-[#6B7280] hover:bg-[#F7F5F2] transition-colors"
+                              title="Edit Stylist"
+                            >
+                              <Edit className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              onClick={() => handleStylistDelete(sty.id, sty.name)}
+                              className="p-1.5 rounded-lg border border-red-200 text-red-600 hover:bg-red-50 transition-colors"
+                              title="Delete Stylist"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Offers Tab */}
+        {activeTab === "offers" && (
+          <div className="bg-white rounded-3xl p-8 shadow-sm border border-black/5">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+              <div>
+                <h3 className="text-xl font-bold text-[#2B2B2B]" style={{ fontFamily: "Poppins, sans-serif" }}>Offers & Discounts</h3>
+                <p className="text-xs text-[#6B7280] mt-0.5">{offers.length} active coupons</p>
+              </div>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => { resetOfferForm(); setOfferFormOpen(true); }}
+                  className="bg-[#5F8D6D] text-white px-4 py-2 rounded-xl text-xs font-semibold hover:bg-[#4E7659] transition-colors flex items-center gap-1.5"
+                >
+                  <Plus className="w-4 h-4" /> Add Offer
+                </button>
+                <button onClick={loadOffers} className="p-2 rounded-xl hover:bg-[#EEF5F1] transition-colors text-[#6B7280] hover:text-[#5F8D6D]" aria-label="Refresh offers list">
+                  <RefreshCw className="w-4 h-4" aria-hidden="true" />
+                </button>
+              </div>
+            </div>
+
+            {offersLoading ? (
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <tbody>{Array.from({ length: 4 }).map((_, i) => <TableRowSkeleton key={i} cols={6} />)}</tbody>
+                </table>
+              </div>
+            ) : offersError ? (
+              <ErrorState onRetry={loadOffers} />
+            ) : offers.length === 0 ? (
+              <p className="text-center text-sm text-[#6B7280] py-10">No discount offers found in database.</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs" aria-label="Offers list">
+                  <thead>
+                    <tr className="border-b border-black/5 text-[#6B7280]">
+                      <th className="pb-3 font-semibold">Offer Title</th>
+                      <th className="pb-3 font-semibold">Promo Code</th>
+                      <th className="pb-3 font-semibold">Discount</th>
+                      <th className="pb-3 font-semibold">Badge</th>
+                      <th className="pb-3 font-semibold">Status</th>
+                      <th className="pb-3 font-semibold text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-black/5">
+                    {offers.map((off) => (
+                      <tr key={off.id} className="hover:bg-[#F7F5F2] transition-colors">
+                        <td className="py-4">
+                          <div>
+                            <div className="font-semibold text-[#2B2B2B]">{off.title}</div>
+                            <div className="text-[10px] text-[#6B7280] max-w-[200px] truncate">{off.description}</div>
+                          </div>
+                        </td>
+                        <td className="py-4">
+                          <code className="text-xs font-mono font-bold text-[#5F8D6D] bg-[#EEF5F1] px-2 py-0.5 rounded-lg border border-[#5F8D6D]/15">
+                            {off.code}
+                          </code>
+                        </td>
+                        <td className="py-4 font-bold text-[#C97C5D]">
+                          {off.discountType === "PERCENTAGE"
+                            ? `${off.discountValue}% OFF`
+                            : `₹${off.discountValue} OFF`}
+                        </td>
+                        <td className="py-4">
+                          <span className="px-2 py-0.5 bg-[#FAF0EC] text-[#C97C5D] rounded-lg font-semibold text-[10px]">
+                            {off.badge}
+                          </span>
+                        </td>
+                        <td className="py-4">
+                          <span
+                            className={`px-2 py-0.5 rounded-full text-[9px] font-bold ${
+                              off.isEnabled ? "bg-[#EEF5F1] text-[#5F8D6D]" : "bg-red-50 text-red-600"
+                            }`}
+                          >
+                            {off.isEnabled ? "ACTIVE" : "INACTIVE"}
+                          </span>
+                        </td>
+                        <td className="py-4 text-right">
+                          <div className="flex items-center gap-1.5 justify-end">
+                            <button
+                              onClick={() => handleOfferToggleActive(off)}
+                              className={`p-1.5 rounded-lg border transition-colors ${
+                                off.isEnabled
+                                  ? "border-red-200 text-red-600 hover:bg-red-50"
+                                  : "border-[#5F8D6D]/30 text-[#5F8D6D] hover:bg-[#EEF5F1]"
+                              }`}
+                              title={off.isEnabled ? "Deactivate" : "Activate"}
+                            >
+                              {off.isEnabled ? <X className="w-3.5 h-3.5" /> : <Check className="w-3.5 h-3.5" />}
+                            </button>
+                            <button
+                              onClick={() => handleOfferEdit(off)}
+                              className="p-1.5 rounded-lg border border-black/10 text-[#6B7280] hover:bg-[#F7F5F2] transition-colors"
+                              title="Edit Offer"
+                            >
+                              <Edit className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              onClick={() => handleOfferDelete(off.id, off.code)}
+                              className="p-1.5 rounded-lg border border-red-200 text-red-600 hover:bg-red-50 transition-colors"
+                              title="Delete Offer"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -693,6 +1090,7 @@ export default function AdminDashboard() {
             )}
           </div>
         )}
+      </div>
 
         {/* Stylists Tab */}
         {activeTab === "stylists" && (
@@ -1329,8 +1727,143 @@ export default function AdminDashboard() {
               </form>
             </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
+
+      {/* Offers CRUD Modal Form */}
+      {offerFormOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in-up">
+          <div className="bg-white rounded-3xl w-full max-w-md p-8 shadow-2xl relative border border-black/5">
+            <button
+              onClick={() => { setOfferFormOpen(false); resetOfferForm(); }}
+              className="absolute top-6 right-6 p-2 rounded-full text-[#6B7280] hover:bg-[#EEF5F1] hover:text-[#2B2B2B] transition-colors"
+              aria-label="Close offer form modal"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <h3 className="text-xl font-bold text-[#2B2B2B] mb-6" style={{ fontFamily: "Poppins, sans-serif" }}>
+              {offerEditId ? "Modify Coupon Offer" : "Create Coupon Offer"}
+            </h3>
+            <form onSubmit={handleOfferSubmit} className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-[#2B2B2B] mb-1.5">Offer Title *</label>
+                  <input
+                    type="text"
+                    required
+                    value={offerTitle}
+                    onChange={(e) => setOfferTitle(e.target.value)}
+                    placeholder="Monsoon Glow Offer"
+                    className="w-full px-4 py-2.5 bg-[#F7F5F2] border border-black/10 rounded-xl text-sm focus:outline-none focus:border-[#5F8D6D] transition-colors"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-[#2B2B2B] mb-1.5">Promo Code *</label>
+                  <input
+                    type="text"
+                    required
+                    value={offerCode}
+                    onChange={(e) => setOfferCode(e.target.value)}
+                    placeholder="GLOW20"
+                    className="w-full px-4 py-2.5 bg-[#F7F5F2] border border-black/10 rounded-xl text-sm focus:outline-none focus:border-[#5F8D6D] transition-colors uppercase font-mono"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-[#2B2B2B] mb-1.5">Description *</label>
+                <textarea
+                  required
+                  value={offerDescription}
+                  onChange={(e) => setOfferDescription(e.target.value)}
+                  placeholder="Get flat 20% off on all facials above ₹500..."
+                  rows={2}
+                  className="w-full px-4 py-2.5 bg-[#F7F5F2] border border-black/10 rounded-xl text-sm focus:outline-none focus:border-[#5F8D6D] transition-colors resize-none"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-[#2B2B2B] mb-1.5">Discount Type *</label>
+                  <select
+                    value={offerDiscountType}
+                    onChange={(e) => setOfferDiscountType(e.target.value as any)}
+                    className="w-full px-3 py-2.5 bg-[#F7F5F2] border border-black/10 rounded-xl text-sm focus:outline-none focus:border-[#5F8D6D] transition-colors"
+                  >
+                    <option value="PERCENTAGE">Percentage (%)</option>
+                    <option value="FIXED_AMOUNT">Fixed Amount (₹)</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-[#2B2B2B] mb-1.5">Discount Value *</label>
+                  <input
+                    type="number"
+                    required
+                    min="1"
+                    value={offerDiscountValue}
+                    onChange={(e) => setOfferDiscountValue(e.target.value)}
+                    placeholder={offerDiscountType === "PERCENTAGE" ? "20" : "150"}
+                    className="w-full px-4 py-2.5 bg-[#F7F5F2] border border-black/10 rounded-xl text-sm focus:outline-none focus:border-[#5F8D6D] transition-colors"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-[#2B2B2B] mb-1.5">Badge Text</label>
+                  <input
+                    type="text"
+                    value={offerBadge}
+                    onChange={(e) => setOfferBadge(e.target.value)}
+                    placeholder="Monsoon"
+                    className="w-full px-4 py-2.5 bg-[#F7F5F2] border border-black/10 rounded-xl text-sm focus:outline-none focus:border-[#5F8D6D] transition-colors"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-[#2B2B2B] mb-1.5">Category Group</label>
+                  <input
+                    type="text"
+                    value={offerCategory}
+                    onChange={(e) => setOfferCategory(e.target.value)}
+                    placeholder="Skin"
+                    className="w-full px-4 py-2.5 bg-[#F7F5F2] border border-black/10 rounded-xl text-sm focus:outline-none focus:border-[#5F8D6D] transition-colors"
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 pt-2">
+                <input
+                  id="off-enabled"
+                  type="checkbox"
+                  checked={offerEnabled}
+                  onChange={(e) => setOfferEnabled(e.target.checked)}
+                  className="w-4 h-4 accent-[#5F8D6D]"
+                />
+                <label htmlFor="off-enabled" className="text-xs font-semibold text-[#2B2B2B] select-none cursor-pointer">
+                  Activate this promo code immediately
+                </label>
+              </div>
+
+              <div className="flex gap-3 pt-4 border-t border-black/5">
+                <button
+                  type="button"
+                  onClick={() => { setOfferFormOpen(false); resetOfferForm(); }}
+                  className="w-1/2 border border-black/10 text-[#6B7280] font-semibold py-2.5 rounded-xl text-xs hover:bg-[#F7F5F2] transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="w-1/2 bg-[#5F8D6D] text-white font-semibold py-2.5 rounded-xl text-xs hover:bg-[#4E7659] transition-colors"
+                >
+                  Save Offer
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
+
