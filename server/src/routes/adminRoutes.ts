@@ -128,107 +128,199 @@ router.get("/audit-logs", authenticateJWT, requirePermission("audit:view"), asyn
   }
 });
 
-// Stylist CRUD
-// POST /api/admin/stylists
+// GET /api/admin/stylists - Get all stylists (Admin Only)
+router.get("/stylists", authenticateJWT, requirePermission("stylist:manage"), async (_req: AuthenticatedRequest, res: Response) => {
+  try {
+    const stylists = await prisma.stylist.findMany({
+      orderBy: { name: "asc" },
+    });
+    return res.json({ success: true, data: stylists });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: { code: "SERVER_ERROR", message: err.message } });
+  }
+});
+
+// POST /api/admin/stylists - Create new stylist
 router.post("/stylists", authenticateJWT, requirePermission("stylist:manage"), async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const { name, photoUrl, experience, specialization, workingHours, isAvailable } = req.body;
-
+    const { name, photoUrl, experience, specialization, rating, isAvailable, workingHours } = req.body;
+    if (!name) {
+      return res.status(400).json({ success: false, error: { code: "BAD_REQUEST", message: "Name is required" } });
+    }
     const stylist = await prisma.stylist.create({
       data: {
         name,
-        photoUrl: photoUrl || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=80&h=80&fit=crop",
-        experience,
-        specialization,
+        photoUrl: photoUrl || "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=80&h=80&fit=crop&auto=format",
+        experience: experience || "1 year",
+        specialization: specialization || "General Hair",
+        rating: rating !== undefined ? parseFloat(rating) : 5.0,
+        isAvailable: isAvailable !== undefined ? Boolean(isAvailable) : true,
         workingHours: workingHours || "9:00 AM - 8:00 PM",
-        isAvailable: isAvailable !== undefined ? isAvailable : true,
       },
     });
-
     return res.status(201).json({ success: true, data: stylist });
   } catch (err: any) {
     return res.status(500).json({ success: false, error: { code: "SERVER_ERROR", message: err.message } });
   }
 });
 
-// PUT /api/admin/stylists/:id
+// PUT /api/admin/stylists/:id - Update stylist
 router.put("/stylists/:id", authenticateJWT, requirePermission("stylist:manage"), async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { id } = req.params;
-    const { name, photoUrl, experience, specialization, workingHours, isAvailable } = req.body;
-
-    const stylist = await prisma.stylist.update({
+    const { name, photoUrl, experience, specialization, rating, isAvailable, workingHours } = req.body;
+    const updated = await prisma.stylist.update({
       where: { id },
       data: {
         name,
         photoUrl,
         experience,
         specialization,
+        rating: rating !== undefined ? parseFloat(rating) : undefined,
+        isAvailable: isAvailable !== undefined ? Boolean(isAvailable) : undefined,
         workingHours,
-        isAvailable: isAvailable !== undefined ? isAvailable : undefined,
       },
     });
-
-    return res.json({ success: true, data: stylist });
+    return res.json({ success: true, data: updated });
   } catch (err: any) {
     return res.status(500).json({ success: false, error: { code: "SERVER_ERROR", message: err.message } });
   }
 });
 
-// DELETE /api/admin/stylists/:id
+// DELETE /api/admin/stylists/:id - Delete stylist
 router.delete("/stylists/:id", authenticateJWT, requirePermission("stylist:manage"), async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { id } = req.params;
-
-    try {
-      const stylist = await prisma.stylist.delete({ where: { id } });
-      return res.json({ success: true, data: stylist });
-    } catch {
-      // Soft deactivate if FK references exist
-      const stylist = await prisma.stylist.update({
-        where: { id },
-        data: { isAvailable: false },
-      });
-      return res.json({ success: true, message: "Stylist has active appointments. Deactivated instead.", data: stylist });
-    }
+    await prisma.stylist.delete({ where: { id } });
+    return res.json({ success: true });
   } catch (err: any) {
     return res.status(500).json({ success: false, error: { code: "SERVER_ERROR", message: err.message } });
   }
 });
 
-// Offer CRUD
-// POST /api/admin/offers
+// GET /api/admin/services - Get all services (Admin Only)
+router.get("/services", authenticateJWT, requirePermission("service:manage"), async (_req: AuthenticatedRequest, res: Response) => {
+  try {
+    const services = await prisma.service.findMany({
+      include: { category: true },
+      orderBy: { name: "asc" },
+    });
+    return res.json({ success: true, data: services });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: { code: "SERVER_ERROR", message: err.message } });
+  }
+});
+
+// POST /api/admin/services - Create service
+router.post("/services", authenticateJWT, requirePermission("service:manage"), async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { name, categoryId, durationMinutes, price, targetGender, targetAgeGroup, imageUrl, benefits, description, isEnabled } = req.body;
+    if (!name || !categoryId || durationMinutes === undefined || price === undefined) {
+      return res.status(400).json({ success: false, error: { code: "BAD_REQUEST", message: "Name, categoryId, durationMinutes, and price are required." } });
+    }
+    const service = await prisma.service.create({
+      data: {
+        name,
+        categoryId,
+        durationMinutes: parseInt(durationMinutes),
+        price: parseFloat(price),
+        targetGender: targetGender || "Unisex",
+        targetAgeGroup: targetAgeGroup || "All",
+        imageUrl: imageUrl || "https://images.unsplash.com/photo-1560066984-138dadb4c035?w=480&h=220&fit=crop&auto=format",
+        benefits: benefits || [],
+        description: description || "",
+        isEnabled: isEnabled !== undefined ? Boolean(isEnabled) : true,
+      },
+      include: { category: true },
+    });
+    return res.status(201).json({ success: true, data: service });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: { code: "SERVER_ERROR", message: err.message } });
+  }
+});
+
+// PUT /api/admin/services/:id - Update service
+router.put("/services/:id", authenticateJWT, requirePermission("service:manage"), async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { name, categoryId, durationMinutes, price, targetGender, targetAgeGroup, imageUrl, benefits, description, isEnabled } = req.body;
+    const updated = await prisma.service.update({
+      where: { id },
+      data: {
+        name,
+        categoryId,
+        durationMinutes: durationMinutes !== undefined ? parseInt(durationMinutes) : undefined,
+        price: price !== undefined ? parseFloat(price) : undefined,
+        targetGender,
+        targetAgeGroup,
+        imageUrl,
+        benefits,
+        description,
+        isEnabled: isEnabled !== undefined ? Boolean(isEnabled) : undefined,
+      },
+      include: { category: true },
+    });
+    return res.json({ success: true, data: updated });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: { code: "SERVER_ERROR", message: err.message } });
+  }
+});
+
+// DELETE /api/admin/services/:id - Delete service
+router.delete("/services/:id", authenticateJWT, requirePermission("service:manage"), async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+    await prisma.service.delete({ where: { id } });
+    return res.json({ success: true });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: { code: "SERVER_ERROR", message: err.message } });
+  }
+});
+
+// GET /api/admin/offers - Get all offers (Admin Only)
+router.get("/offers", authenticateJWT, requirePermission("offer:manage"), async (_req: AuthenticatedRequest, res: Response) => {
+  try {
+    const offers = await prisma.offer.findMany({
+      orderBy: { createdAt: "desc" },
+    });
+    return res.json({ success: true, data: offers });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: { code: "SERVER_ERROR", message: err.message } });
+  }
+});
+
+// POST /api/admin/offers - Create offer
 router.post("/offers", authenticateJWT, requirePermission("offer:manage"), async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { title, code, description, discountType, discountValue, badge, category, isEnabled, validUntil } = req.body;
-
+    if (!title || !code || discountType === undefined || discountValue === undefined) {
+      return res.status(400).json({ success: false, error: { code: "BAD_REQUEST", message: "Title, code, discountType, and discountValue are required." } });
+    }
     const offer = await prisma.offer.create({
       data: {
         title,
         code,
-        description,
+        description: description || "",
         discountType: discountType || "PERCENTAGE",
         discountValue: parseFloat(discountValue),
         badge: badge || "Promo",
-        category: category || "General",
-        isEnabled: isEnabled !== undefined ? isEnabled : true,
+        category: category || "All",
+        isEnabled: isEnabled !== undefined ? Boolean(isEnabled) : true,
         validUntil: validUntil ? new Date(validUntil) : null,
       },
     });
-
     return res.status(201).json({ success: true, data: offer });
   } catch (err: any) {
     return res.status(500).json({ success: false, error: { code: "SERVER_ERROR", message: err.message } });
   }
 });
 
-// PUT /api/admin/offers/:id
+// PUT /api/admin/offers/:id - Update offer
 router.put("/offers/:id", authenticateJWT, requirePermission("offer:manage"), async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { id } = req.params;
     const { title, code, description, discountType, discountValue, badge, category, isEnabled, validUntil } = req.body;
-
-    const offer = await prisma.offer.update({
+    const updated = await prisma.offer.update({
       where: { id },
       data: {
         title,
@@ -238,27 +330,22 @@ router.put("/offers/:id", authenticateJWT, requirePermission("offer:manage"), as
         discountValue: discountValue !== undefined ? parseFloat(discountValue) : undefined,
         badge,
         category,
-        isEnabled: isEnabled !== undefined ? isEnabled : undefined,
+        isEnabled: isEnabled !== undefined ? Boolean(isEnabled) : undefined,
         validUntil: validUntil ? new Date(validUntil) : null,
       },
     });
-
-    return res.json({ success: true, data: offer });
+    return res.json({ success: true, data: updated });
   } catch (err: any) {
     return res.status(500).json({ success: false, error: { code: "SERVER_ERROR", message: err.message } });
   }
 });
 
-// DELETE /api/admin/offers/:id
+// DELETE /api/admin/offers/:id - Delete offer
 router.delete("/offers/:id", authenticateJWT, requirePermission("offer:manage"), async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { id } = req.params;
-
-    const offer = await prisma.offer.delete({
-      where: { id },
-    });
-
-    return res.json({ success: true, data: offer });
+    await prisma.offer.delete({ where: { id } });
+    return res.json({ success: true });
   } catch (err: any) {
     return res.status(500).json({ success: false, error: { code: "SERVER_ERROR", message: err.message } });
   }

@@ -26,7 +26,7 @@ export const generateAccessToken = (payload: TokenPayload): string => {
 };
 
 export const generateRefreshToken = (payload: { userId: string }): { token: string; hash: string } => {
-  const token = jwt.sign(payload, JWT_REFRESH_SECRET, { expiresIn: "7d" });
+  const token = jwt.sign({ ...payload, jti: crypto.randomUUID() }, JWT_REFRESH_SECRET, { expiresIn: "7d" });
   const hash = crypto.createHash("sha256").update(token).digest("hex");
   return { token, hash };
 };

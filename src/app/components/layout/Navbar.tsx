@@ -7,13 +7,12 @@ import {
 } from "lucide-react";
 import { useAuth } from "../../../context/AuthContext";
 import { useNotifications } from "../../../context/NotificationContext";
+import { useRouter } from "next/navigation";
 
-type Page = "home" | "services" | "gallery" | "booking" | "queue" | "stylist" | "admin";
+type Page = "home" | "services" | "gallery" | "booking" | "queue" | "stylist" | "admin" | "my-bookings";
 
 interface NavbarProps {
   page: Page;
-  navigate: (p: Page) => void;
-  goToBooking: () => void;
 }
 
 const navConfig: { id: Page; label: string }[] = [
@@ -24,7 +23,7 @@ const navConfig: { id: Page; label: string }[] = [
   { id: "booking", label: "Book Appointment" },
 ];
 
-function Navbar({ page, navigate, goToBooking }: NavbarProps) {
+function Navbar({ page }: NavbarProps) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
@@ -59,8 +58,11 @@ function Navbar({ page, navigate, goToBooking }: NavbarProps) {
     return () => document.removeEventListener("keydown", handleEsc);
   }, []);
 
+  const router = useRouter();
+
   const handleNav = (p: Page) => {
-    navigate(p);
+    if (p === "home") router.push("/");
+    else router.push(`/${p}`);
     setMobileOpen(false);
     setProfileOpen(false);
   };
@@ -69,6 +71,11 @@ function Navbar({ page, navigate, goToBooking }: NavbarProps) {
     setProfileOpen(false);
     setMobileOpen(false);
     await logout();
+    window.location.href = "/";
+  };
+
+  const goToBooking = () => {
+    router.push("/booking");
   };
 
   const navLinks = [
@@ -172,7 +179,7 @@ function Navbar({ page, navigate, goToBooking }: NavbarProps) {
                     </span>
                   </div>
                   <button
-                    onClick={() => { handleNav("booking"); }}
+                    onClick={() => { handleNav("my-bookings"); }}
                     className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-[#2B2B2B] hover:bg-[#F7F5F2] transition-colors text-left"
                     style={{ fontFamily: "Inter, sans-serif" }}
                   >
