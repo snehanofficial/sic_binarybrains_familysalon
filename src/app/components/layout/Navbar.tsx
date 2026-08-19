@@ -9,7 +9,7 @@ import { useAuth } from "../../../context/AuthContext";
 import { useNotifications } from "../../../context/NotificationContext";
 import { useRouter } from "next/navigation";
 
-type Page = "home" | "services" | "gallery" | "booking" | "queue" | "stylist" | "admin";
+type Page = "home" | "services" | "gallery" | "booking" | "queue" | "stylist" | "admin" | "my-bookings";
 
 interface NavbarProps {
   page: Page;
@@ -179,7 +179,7 @@ function Navbar({ page }: NavbarProps) {
                     </span>
                   </div>
                   <button
-                    onClick={() => { handleNav("booking"); }}
+                    onClick={() => { handleNav("my-bookings"); }}
                     className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-[#2B2B2B] hover:bg-[#F7F5F2] transition-colors text-left"
                     style={{ fontFamily: "Inter, sans-serif" }}
                   >

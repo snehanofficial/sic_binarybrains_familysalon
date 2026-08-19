@@ -255,3 +255,101 @@ export const markNotificationRead = (id: string) =>
 
 export const markAllNotificationsRead = () =>
   apiFetch("/notifications/read-all", { method: "PATCH" });
+
+// Admin Catalog & Services Types
+export interface AdminServicePayload {
+  name: string;
+  categoryId: string;
+  description: string;
+  durationMinutes: number;
+  price: number;
+  targetGender: string;
+  targetAgeGroup: string;
+  imageUrl: string;
+  benefits: string[];
+  isEnabled: boolean;
+}
+
+export interface AdminStylistPayload {
+  name: string;
+  photoUrl: string;
+  experience: string;
+  specialization: string;
+  workingHours: string;
+  isAvailable: boolean;
+}
+
+export interface AdminOfferPayload {
+  title: string;
+  code: string;
+  description: string;
+  discountType: "PERCENTAGE" | "FIXED_AMOUNT";
+  discountValue: number;
+  badge: string;
+  category: string;
+  isEnabled: boolean;
+  validUntil: string | null;
+}
+
+// Admin Catalog & Services
+export const fetchAdminServices = () =>
+  apiFetch<Service[]>("/admin/services");
+
+export const createAdminService = (payload: AdminServicePayload) =>
+  apiFetch<Service>("/admin/services", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+
+export const updateAdminService = (id: string, payload: Partial<AdminServicePayload>) =>
+  apiFetch<Service>(`/admin/services/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(payload),
+  });
+
+export const deleteAdminService = (id: string) =>
+  apiFetch<{ success: boolean }>(`/admin/services/${id}`, {
+    method: "DELETE",
+  });
+
+// Admin Stylists
+export const fetchAdminStylists = () =>
+  apiFetch<Stylist[]>("/admin/stylists");
+
+export const createAdminStylist = (payload: AdminStylistPayload) =>
+  apiFetch<Stylist>("/admin/stylists", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+
+export const updateAdminStylist = (id: string, payload: Partial<AdminStylistPayload>) =>
+  apiFetch<Stylist>(`/admin/stylists/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(payload),
+  });
+
+export const deleteAdminStylist = (id: string) =>
+  apiFetch<{ success: boolean }>(`/admin/stylists/${id}`, {
+    method: "DELETE",
+  });
+
+// Admin Offers
+export const fetchAdminOffers = () =>
+  apiFetch<Offer[]>("/admin/offers");
+
+export const createAdminOffer = (payload: AdminOfferPayload) =>
+  apiFetch<Offer>("/admin/offers", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+
+export const updateAdminOffer = (id: string, payload: Partial<AdminOfferPayload>) =>
+  apiFetch<Offer>(`/admin/offers/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(payload),
+  });
+
+export const deleteAdminOffer = (id: string) =>
+  apiFetch<{ success: boolean }>(`/admin/offers/${id}`, {
+    method: "DELETE",
+  });
